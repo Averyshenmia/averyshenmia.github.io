@@ -50,6 +50,24 @@
             white-space: pre-wrap;
         }
         .close-btn { float: right; cursor: pointer; color: #888; font-size: 0.9em; }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .nav-btn {
+            background: none;
+            border: 1px solid #dcd3c6;
+            padding: 6px 15px;
+            cursor: pointer;
+            color: #555;
+            font-family: inherit;
+            font-size: 0.9em;
+        }
+        .nav-btn:hover { background: #f4f1ea; color: #000; }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -60,11 +78,18 @@
         <span class="close-btn" onclick="closeReader()">[ 关闭 ]</span>
         <h3 id="read-title" style="font-weight:normal; font-size:1.3em; margin-bottom:20px;"></h3>
         <div id="read-content"></div>
+        <div class="nav-buttons">
+            <button id="prev-btn" class="nav-btn" onclick="changeArticle(-1)">← 上一篇</button>
+            <button id="next-btn" class="nav-btn" onclick="changeArticle(1)">下一篇 →</button>
+        </div>
     </div>
 
     <div id="diary-list">加载中...</div>
 
     <script>
+        let allArticles = [];
+        let currentIndex = 0;
+
         async function loadDiaries() {
             const container = document.getElementById('diary-list');
             try {
@@ -77,8 +102,9 @@
                     return;
                 }
 
-                let html = "<ul class='post-list'>";
-                for (let file of files.reverse()) {
+                allArticles = [];
+                // 保持正序：新发的在最下面
+                for (let file of files) {
                     if (file.name.endsWith('.md')) {
                         const fileRes = await fetch(file.download_url);
                         const text = await fileRes.text();
@@ -92,14 +118,19 @@
                         if (matchDate) date = matchDate[1].split('T')[0];
 
                         let body = text.replace(/---[\s\S]*?---/, '').trim();
-
-                        html += `
-                            <li class="post-item">
-                                ${date ? `<div class="post-date">${date}</div>` : ''}
-                                <span class="post-title" onclick='openArticle(${JSON.stringify(title)}, ${JSON.stringify(body)})'>${title}</span>
-                            </li>
-                        `;
+                        allArticles.push({ title, body, date });
                     }
+                }
+
+                let html = "<ul class='post-list'>";
+                for (let i = 0; i < allArticles.length; i++) {
+                    let art = allArticles[i];
+                    html += `
+                        <li class="post-item">
+                            ${art.date ? `<div class="post-date">${art.date}</div>` : ''}
+                            <span class="post-title" onclick='openArticle(${i})'>${art.title}</span>
+                        </li>
+                    `;
                 }
                 html += "</ul>";
                 container.innerHTML = html;
@@ -108,12 +139,26 @@
             }
         }
 
-        function openArticle(title, body) {
-            document.getElementById('read-title').innerText = title;
-            document.getElementById('read-content').innerHTML = marked.parse(body);
+        function openArticle(index) {
+            currentIndex = index;
+            let art = allArticles[currentIndex];
+            document.getElementById('read-title').innerText = art.title;
+            document.getElementById('read-content').innerHTML = marked.parse(art.body);
+            
+            // 控钮状态
+            document.getElementById('prev-btn').disabled = (currentIndex === 0);
+            document.getElementById('next-btn').disabled = (currentIndex === allArticles.length - 1);
+
             const reader = document.getElementById('reader');
             reader.style.display = 'block';
             reader.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function changeArticle(direction) {
+            let newIndex = currentIndex + direction;
+            if (newIndex >= 0 && newIndex < allArticles.length) {
+                openArticle(newIndex);
+            }
         }
 
         function closeReader() {
