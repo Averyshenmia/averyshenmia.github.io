@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作品 - 无题空间</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            background-color: #f4f1ea;
+            color: #333;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.8;
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+        .back-home { font-size: 0.9em; color: #666; text-decoration: none; border-bottom: 1px dashed #aaa; }
+        h2 { font-weight: normal; font-size: 1.8em; margin-top: 30px; margin-bottom: 40px; border-bottom: 1px solid #dcd3c6; padding-bottom: 15px; }
+        .post-list { list-style: none; padding: 0; }
+        .post-item { margin-bottom: 30px; }
+        .post-category { font-size: 0.85em; color: #888; margin-bottom: 3px; }
+        .post-title {
+            font-size: 1.2em;
+            color: #2c3e50;
+            cursor: pointer;
+            border-bottom: 1px solid #dcd3c6;
+            padding-bottom: 2px;
+            display: inline-block;
+        }
+        .post-title:hover { color: #000; border-bottom: 1px solid #000; }
+        .reader-box {
+            display: none;
+            background: #fff;
+            border: 1px solid #dcd3c6;
+            padding: 40px;
+            margin-top: 40px;
+            white-space: pre-wrap; /* 完美保留诗歌换行 */
+        }
+        .close-btn { float: right; cursor: pointer; color: #888; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-home">← 返回主页</a>
+    <h2>🌙 诗歌与作品</h2>
+
+    <div id="reader" class="reader-box">
+        <span class="close-btn" onclick="closeReader()">[ 关闭 ]</span>
+        <h3 id="read-title" style="font-weight:normal; font-size:1.3em; margin-bottom:20px;"></h3>
+        <div id="read-content"></div>
+    </div>
+
+    <div id="poem-list">加载中...</div>
+
+    <script>
+        async function loadPoems() {
+            const container = document.getElementById('poem-list');
+            try {
+                const res = await fetch(`https://api.github.com/repos/averyshenmia/averyshenmia.github.io/contents/content/poem`);
+                if (!res.ok) throw new Error();
+                const files = await res.json();
+                
+                if (files.length === 0) {
+                    container.innerHTML = "<p style='color:#888;'>暂无作品</p>";
+                    return;
+                }
+
+                let html = "<ul class='post-list'>";
+                for (let file of files.reverse()) {
+                    if (file.name.endsWith('.md')) {
+                        const fileRes = await fetch(file.download_url);
+                        const text = await fileRes.text();
+                        
+                        let title = file.name;
+                        let category = "";
+                        const matchTitle = text.match(/title:\s*["']?(.*?)["']?(\r?\n|$)/);
+                        const matchCategory = text.match(/category:\s*["']?(.*?)["']?(\r?\n|$)/);
+                        
+                        if (matchTitle) title = matchTitle[1];
+                        if (matchCategory) category = matchCategory[1];
+
+                        let body = text.replace(/---[\s\S]*?---/, '').trim();
+
+                        html += `
+                            <li class="post-item">
+                                ${category ? `<div class="post-category">主题：${category}</div>` : ''}
+                                <span class="post-title" onclick='openArticle(${JSON.stringify(title)}, ${JSON.stringify(body)})'>${title}</span>
+                            </li>
+                        `;
+                    }
+                }
+                html += "</ul>";
+                container.innerHTML = html;
+            } catch (e) {
+                container.innerHTML = "<p style='color:#888;'>暂无作品</p>";
+            }
+        }
+
+        function openArticle(title, body) {
+            document.getElementById('read-title').innerText = title;
+            document.getElementById('read-content').innerHTML = marked.parse(body);
+            const reader = document.getElementById('reader');
+            reader.style.display = 'block';
+            reader.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function closeReader() {
+            document.getElementById('reader').style.display = 'none';
+        }
+
+        loadPoems();
+    </script>
+</body>
+</html>
