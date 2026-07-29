@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧛</title>
+    <title>🧛 - 吸血鬼日记</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         body {
@@ -25,15 +25,15 @@
             font-weight: normal;
             font-size: 1.8em;
             margin-top: 30px;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             border-bottom: 1px solid #dcd3c6;
             padding-bottom: 15px;
         }
-        .post-list { list-style: none; padding: 0; }
-        .post-item { margin-bottom: 30px; }
-        .post-date { font-size: 0.85em; color: #888; margin-bottom: 3px; }
+        .post-list { list-style: none; padding: 0; margin-bottom: 50px; }
+        .post-item { margin-bottom: 20px; }
+        .post-date { font-size: 0.85em; color: #888; margin-bottom: 2px; }
         .post-title {
-            font-size: 1.2em;
+            font-size: 1.15em;
             color: #2c3e50;
             cursor: pointer;
             border-bottom: 1px solid #dcd3c6;
@@ -41,15 +41,16 @@
             display: inline-block;
         }
         .post-title:hover { color: #000; border-bottom: 1px solid #000; }
+        .post-title.active { color: #000; font-weight: bold; border-bottom: 2px solid #000; }
+        
         .reader-box {
             display: none;
             background: #fff;
             border: 1px solid #dcd3c6;
             padding: 40px;
-            margin-top: 40px;
-            white-space: pre-wrap;
+            margin-top: 30px;
+            margin-bottom: 60px;
         }
-        .close-btn { float: right; cursor: pointer; color: #888; font-size: 0.9em; }
         .nav-buttons {
             display: flex;
             justify-content: space-between;
@@ -72,23 +73,23 @@
 </head>
 <body>
     <a href="index.html" class="back-home">← 返回主页</a>
-    <h2>目录章节</h2>
-
+    
+    <!-- 阅读区域（默认隐藏，点击后在上方或下方展开，目录依然保留） -->
     <div id="reader" class="reader-box">
-        <span class="close-btn" onclick="closeReader()">[ 关闭 ]</span>
-        <h3 id="read-title" style="font-weight:normal; font-size:1.3em; margin-bottom:20px;"></h3>
-        <div id="read-content"></div>
+        <h3 id="read-title" style="font-weight:normal; font-size:1.4em; margin-bottom:25px; border-bottom: 1px solid #eee; padding-bottom: 10px;"></h3>
+        <div id="read-content" style="white-space: pre-wrap;"></div>
         <div class="nav-buttons">
             <button id="prev-btn" class="nav-btn" onclick="changeArticle(-1)">← 上一篇</button>
             <button id="next-btn" class="nav-btn" onclick="changeArticle(1)">下一篇 →</button>
         </div>
     </div>
 
+    <h2>目录章节</h2>
     <div id="diary-list">加载中...</div>
 
     <script>
         let allArticles = [];
-        let currentIndex = 0;
+        let currentIndex = -1;
 
         async function loadDiaries() {
             const container = document.getElementById('diary-list');
@@ -102,8 +103,7 @@
                     return;
                 }
 
-                allArticles = [];
-                // 保持正序：新发的在最下面
+                let rawArticles = [];
                 for (let file of files) {
                     if (file.name.endsWith('.md')) {
                         const fileRes = await fetch(file.download_url);
@@ -111,47 +111,76 @@
                         
                         let title = file.name;
                         let date = "";
+                        let weight = 9999; // 默认权重
+
                         const matchTitle = text.match(/title:\s*["']?(.*?)["']?(\r?\n|$)/);
                         const matchDate = text.match(/date:\s*["']?(.*?)["']?(\r?\n|$)/);
+                        const matchWeight = text.match(/weight:\s*([0-9]+)/);
                         
                         if (matchTitle) title = matchTitle[1];
                         if (matchDate) date = matchDate[1].split('T')[0];
+                        if (matchWeight) weight = parseInt(matchWeight[1]);
 
                         let body = text.replace(/---[\s\S]*?---/, '').trim();
-                        allArticles.push({ title, body, date });
+                        rawArticles.push({ title, body, date, weight, fileName: file.name });
                     }
                 }
 
-                let html = "<ul class='post-list'>";
-                for (let i = 0; i < allArticles.length; i++) {
-                    let art = allArticles[i];
-                    html += `
-                        <li class="post-item">
-                            ${art.date ? `<div class="post-date">${art.date}</div>` : ''}
-                            <span class="post-title" onclick='openArticle(${i})'>${art.title}</span>
-                        </li>
-                    `;
-                }
-                html += "</ul>";
-                container.innerHTML = html;
+                // 核心排序：优先按照后台填写的 weight 从小到大排序；若 weight 相同，则按文件名或日期
+                rawArticles.sort((a, b) => {
+                    if (a.weight !== b.weight) {
+                        return a.weight - b.weight;
+                    }
+                    return a.fileName.localeCompare(b.fileName);
+                });
+
+                allArticles = rawArticles;
+
+                renderList();
             } catch (e) {
                 container.innerHTML = "<p style='color:#888;'>暂无日记</p>";
             }
         }
 
+        function renderList() {
+            const container = document.getElementById('diary-list');
+            if (allArticles.length === 0) {
+                container.innerHTML = "<p style='color:#888;'>暂无日记</p>";
+                return;
+            }
+
+            let html = "<ul class='post-list'>";
+            for (let i = 0; i < allArticles.length; i++) {
+                let art = allArticles[i];
+                let isActive = (i === currentIndex) ? ' active' : '';
+                html += `
+                    <li class="post-item">
+                        ${art.date ? `<div class="post-date">${art.date}</div>` : ''}
+                        <span class="post-title${isActive}" onclick='openArticle(${i})'>${art.title}</span>
+                    </li>
+                `;
+            }
+            html += "</ul>";
+            container.innerHTML = html;
+        }
+
         function openArticle(index) {
             currentIndex = index;
             let art = allArticles[currentIndex];
+            document.getElementById('read-titleleast').innerText = art.title; // 修正选择器
             document.getElementById('read-title').innerText = art.title;
             document.getElementById('read-content').innerHTML = marked.parse(art.body);
             
-            // 控钮状态
+            // 按钮状态更新
             document.getElementById('prev-btn').disabled = (currentIndex === 0);
             document.getElementById('next-btn').disabled = (currentIndex === allArticles.length - 1);
 
             const reader = document.getElementById('reader');
             reader.style.display = 'block';
             reader.scrollIntoView({ behavior: 'smooth' });
+
+            // 重新渲染目录以高亮当前选中的篇章
+            renderList();
         }
 
         function changeArticle(direction) {
@@ -159,10 +188,6 @@
             if (newIndex >= 0 && newIndex < allArticles.length) {
                 openArticle(newIndex);
             }
-        }
-
-        function closeReader() {
-            document.getElementById('reader').style.display = 'none';
         }
 
         loadDiaries();
