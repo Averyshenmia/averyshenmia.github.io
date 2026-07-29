@@ -74,7 +74,7 @@
 <body>
     <a href="index.html" class="back-home">← 返回主页</a>
     
-    <!-- 阅读区域（默认隐藏，点击后在上方或下方展开，目录依然保留） -->
+    <!-- 阅读区域 -->
     <div id="reader" class="reader-box">
         <h3 id="read-title" style="font-weight:normal; font-size:1.4em; margin-bottom:25px; border-bottom: 1px solid #eee; padding-bottom: 10px;"></h3>
         <div id="read-content" style="white-space: pre-wrap;"></div>
@@ -95,7 +95,7 @@
             const container = document.getElementById('diary-list');
             try {
                 const res = await fetch(`https://api.github.com/repos/averyshenmia/averyshenmia.github.io/contents/content/diary`);
-                if (!res.ok) throw new Error();
+                if (!res.ok) throw new Error("GitHub API 请求失败，状态码：" + res.status);
                 const files = await res.json();
                 
                 if (files.length === 0) {
@@ -111,7 +111,7 @@
                         
                         let title = file.name;
                         let date = "";
-                        let weight = 9999; // 默认权重
+                        let weight = 9999;
 
                         const matchTitle = text.match(/title:\s*["']?(.*?)["']?(\r?\n|$)/);
                         const matchDate = text.match(/date:\s*["']?(.*?)["']?(\r?\n|$)/);
@@ -126,7 +126,6 @@
                     }
                 }
 
-                // 核心排序：优先按照后台填写的 weight 从小到大排序；若 weight 相同，则按文件名或日期
                 rawArticles.sort((a, b) => {
                     if (a.weight !== b.weight) {
                         return a.weight - b.weight;
@@ -135,10 +134,10 @@
                 });
 
                 allArticles = rawArticles;
-
                 renderList();
             } catch (e) {
-                container.innerHTML = "<p style='color:#888;'>暂无日记</p>";
+                console.error(e);
+                container.innerHTML = "<p style='color:#888;'>加载失败，请检查网络或 GitHub 目录是否存在</p>";
             }
         }
 
@@ -167,11 +166,9 @@
         function openArticle(index) {
             currentIndex = index;
             let art = allArticles[currentIndex];
-            document.getElementById('read-titleleast').innerText = art.title; // 修正选择器
             document.getElementById('read-title').innerText = art.title;
             document.getElementById('read-content').innerHTML = marked.parse(art.body);
             
-            // 按钮状态更新
             document.getElementById('prev-btn').disabled = (currentIndex === 0);
             document.getElementById('next-btn').disabled = (currentIndex === allArticles.length - 1);
 
@@ -179,7 +176,6 @@
             reader.style.display = 'block';
             reader.scrollIntoView({ behavior: 'smooth' });
 
-            // 重新渲染目录以高亮当前选中的篇章
             renderList();
         }
 
