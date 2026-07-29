@@ -8,7 +8,7 @@ public_folder: "/images"
 
 collections:
   - name: "diary"
-    label: "📓 日记"
+    label: "吸血鬼日记"
     folder: "content/diary"
     create: true
     fields:
@@ -16,10 +16,10 @@ collections:
       - {label: "日期", name: "date", widget: "datetime"}
       - {label: "正文", name: "body", widget: "markdown"}
   - name: "poem"
-    label: "🌙 诗歌"
+    label: "十九世纪故事集"
     folder: "content/poem"
     create: true
     fields:
       - {label: "作品名", name: "title", widget: "string"}
-      - {label: "主题", name: "category", widget: "string"}
-      - {label: "正文 (直接回车排版)", name: "body", widget: "markdown"}
+      - {label: "日期", name: "date", widget: "datetime"}
+      - {label: "正文", name: "body", widget: "markdown"}
