@@ -3,165 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>无题空间 - 日记与诗歌</title>
-    <!-- 引入解析 Markdown 的工具库 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <title>无题空间</title>
     <style>
         body {
-            background-color: #f4f1ea; /* 柔和的纸质米白色 */
+            background-color: #f4f1ea;
             color: #333;
-            font-family: 'Georgia', 'Times New Roman', serif; /* 优雅的衬线字体 */
+            font-family: 'Georgia', 'Times New Roman', serif;
             line-height: 1.8;
-            max-width: 650px;
+            max-width: 600px;
             margin: 0 auto;
-            padding: 60px 20px;
-        }
-        header {
+            padding: 100px 20px;
             text-align: center;
-            margin-bottom: 50px;
-            border-bottom: 1px solid #dcd3c6;
-            padding-bottom: 25px;
         }
         h1 {
             font-weight: normal;
-            font-size: 2.2em;
-            letter-spacing: 4px;
+            font-size: 2.5em;
+            letter-spacing: 5px;
             color: #222;
             margin-bottom: 10px;
         }
         p.subtitle {
             color: #777;
             font-style: italic;
-            font-size: 0.95em;
+            margin-bottom: 60px;
         }
-        .nav {
-            margin-top: 25px;
+        .menu-box {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 250px;
+            margin: 0 auto;
         }
-        .nav a {
-            color: #555;
+        .menu-btn {
+            background-color: transparent;
+            border: 1px solid #dcd3c6;
+            color: #444;
+            padding: 12px 0;
             text-decoration: none;
-            margin: 0 15px;
-            font-size: 0.9em;
-            border-bottom: 1px dashed #aaa;
-            padding-bottom: 2px;
-        }
-        .nav a:hover {
-            color: #000;
-            border-bottom: 1px solid #000;
-        }
-        /* 文章列表样式 */
-        .post-list {
-            list-style: none;
-            padding: 0;
-        }
-        .post-item {
-            margin-bottom: 40px;
-        }
-        .post-date {
-            font-size: 0.85em;
-            color: #888;
-            margin-bottom: 5px;
-        }
-        .post-title {
-            font-size: 1.2em;
-            color: #2c3e50;
-            text-decoration: none;
-            display: inline-block;
-            border-bottom: 1px solid #dcd3c6;
-            padding-bottom: 2px;
-        }
-        .post-title:hover {
-            color: #000;
-            border-bottom: 1px solid #000;
-        }
-        .section-title {
             font-size: 1.1em;
-            color: #555;
-            margin-top: 40px;
-            margin-bottom: 20px;
-            border-left: 3px solid #b5a48b;
-            padding-left: 10px;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
         }
-        .admin-link {
-            text-align: center;
-            margin-top: 60px;
+        .menu-btn:hover {
+            background-color: #e6e2d8;
+            color: #000;
+            border-color: #aaa;
+        }
+        .admin-entry {
+            margin-top: 80px;
             font-size: 0.85em;
         }
-        .admin-link a {
+        .admin-entry a {
             color: #888;
             text-decoration: none;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>无题空间</h1>
-        <p class="subtitle">记录日记与诗歌的角落</p>
-        <div class="nav">
-            <a href="/admin/">进入写作后台</a>
-        </div>
-    </header>
-
-    <main>
-        <div class="section-title">📓 日记时间线</div>
-        <div id="diary-list">加载中...</div>
-
-        <div class="section-title">🌙 诗歌作品</div>
-        <div id="poem-list">加载中...</div>
-    </main>
-
-    <div class="admin-link">
-        <a href="/admin/">[ 后台管理 ]</a>
+    <h1>无题空间</h1>
+    <p class="subtitle">记录日记、诗歌与回响的角落</p>
+    
+    <div class="menu-box">
+        <a href="diary.html" class="menu-btn">📓 日记</a>
+        <a href="poem.html" class="menu-btn">🌙 作品</a>
+        <a href="guestbook.html" class="menu-btn">💬 留言</a>
     </div>
 
-    <script>
-        // 自动从 GitHub 仓库读取文件并展示的脚本
-        async function loadContent(folder, elementId) {
-            const container = document.getElementById(elementId);
-            try {
-                // 通过 GitHub API 获取文件夹内容
-                const res = await fetch(`https://api.github.com/repos/averyshenmia/averyshenmia.github.io/contents/content/${folder}`);
-                if (!res.ok) throw new Error("无法读取");
-                const files = await res.json();
-                
-                if (files.length === 0) {
-                    container.innerHTML = "<p style='color: #888; font-size: 0.9em;'>暂无内容，快去后台写一篇吧</p>";
-                    return;
-                }
-
-                let html = "<ul class='post-list'>";
-                // 倒序排列，最新的在前面
-                for (let file of files.reverse()) {
-                    if (file.name.endsWith('.md')) {
-                        const fileRes = await fetch(file.download_url);
-                        const text = await fileRes.text();
-                        
-                        // 简单解析 Frontmatter 标题
-                        let title = file.name;
-                        let date = "";
-                        const matchTitle = text.match(/title:\s*["']?(.*?)["']?(\r?\n|$)/);
-                        const matchDate = text.match(/date:\s*["']?(.*?)["']?(\r?\n|$)/);
-                        
-                        if (matchTitle) title = matchTitle[1];
-                        if (matchDate) date = matchDate[1].split('T')[0]; // 取年月日
-
-                        html += `
-                            <li class="post-item">
-                                ${date ? `<div class="post-date">${date}</div>` : ''}
-                                <span class="post-title">${title}</span>
-                            </li>
-                        `;
-                    }
-                }
-                html += "</ul>";
-                container.innerHTML = html;
-            } catch (e) {
-                container.innerHTML = "<p style='color: #888; font-size: 0.9em;'>暂无内容，快去后台写一篇吧</p>";
-            }
-        }
-
-        loadContent('diary', 'diary-list');
-        loadContent('poem', 'poem-list');
-    </script>
+    <div class="admin-entry">
+        <a href="/admin/">[ 进入写作后台 ]</a>
+    </div>
 </body>
 </html>
