@@ -1,12 +1,1 @@
 # averyshenmia.github.io
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <title>我的个人网站</title>
-</head>
-<body>
-    <h1>Hello, GitHub Pages!</h1>
-    <p>这是我的第一个在线网站。</p>
-</body>
-</html>
