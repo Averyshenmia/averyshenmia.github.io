@@ -1,0 +1,25 @@
+backend:
+  name: github
+  repo: averyshenmia/averyshenmia.github.io
+  branch: main
+publish_mode: editorial_workflow
+media_folder: "images"
+public_folder: "/images"
+
+collections:
+  - name: "diary"
+    label: "📓 日记"
+    folder: "content/diary"
+    create: true
+    fields:
+      - {label: "标题", name: "title", widget: "string"}
+      - {label: "日期", name: "date", widget: "datetime"}
+      - {label: "正文", name: "body", widget: "markdown"}
+  - name: "poem"
+    label: "🌙 诗歌"
+    folder: "content/poem"
+    create: true
+    fields:
+      - {label: "作品名", name: "title", widget: "string"}
+      - {label: "主题", name: "category", widget: "string"}
+      - {label: "正文 (直接回车排版)", name: "body", widget: "markdown"}
