@@ -11,7 +11,9 @@ collections:
     label: "吸血鬼日记"
     folder: "content/diary"
     create: true
+    sortable_fields: ["weight", "date", "title"] # 允许在后台按权重排序
     fields:
+      - {label: "排序编号 (数字越小越靠前，如 1, 2, 3)", name: "weight", widget: "number", value_type: "int", required: false}
       - {label: "标题", name: "title", widget: "string"}
       - {label: "日期", name: "date", widget: "datetime"}
       - {label: "正文", name: "body", widget: "markdown"}
@@ -19,7 +21,9 @@ collections:
     label: "十九世纪故事集"
     folder: "content/poem"
     create: true
+    sortable_fields: ["weight", "date", "title"]
     fields:
+      - {label: "排序编号 (数字越小越靠前，如 1, 2, 3)", name: "weight", widget: "number", value_type: "int", required: false}
       - {label: "作品名", name: "title", widget: "string"}
       - {label: "日期", name: "date", widget: "datetime"}
       - {label: "正文", name: "body", widget: "markdown"}
